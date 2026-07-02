@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>柒七零 · 个人主页</title>
+    <style>
+        /* ===== 全局样式 & 变量 ===== */
+        :root {
+            --bg: #f9fafb;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-secondary: #6b7280;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --border: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            --radius: 16px;
+            --transition: 0.2s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* ===== 开场动画遮罩层 ===== */
+        .intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .intro-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* 画布 - 粒子动画 */
+        #particleCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* 文字容器 */
+        .intro-text-container {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+
+        .intro-name {
+            font-size: clamp(3rem, 8vw, 5.5rem);
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: #ffffff;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUpIn 1s 0.5s forwards;
+            text-shadow: 0 0 60px rgba(37, 99, 235, 0.5), 0 0 120px rgba(37, 99, 235, 0.3);
+        }
+
+        .intro-subtitle {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 0.8rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUpIn 1s 0.9s forwards;
+        }
+
+        /* 底部提示线 */
+        .intro-hint {
+            position: absolute;
+            bottom: 2.5rem;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0;
+            animation: fadeUpIn 1s 1.5s forwards;
+        }
+
+        .intro-hint span {
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+        }
+
+        .intro-hint .line {
+            width: 1px;
+            height: 36px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.5), transparent);
+            animation: pulseLine 2s ease-in-out infinite;
+        }
+
+        @keyframes fadeUpIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulseLine {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* ===== 主容器 ===== */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        /* ===== 头部区域 ===== */
+        .header {
+            text-align: center;
+            padding: 2rem 0 1.5rem;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.2rem;
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--accent);
+            box-shadow: 0 0 0 4px white, 0 0 0 6px var(--border);
+            user-select: none;
+        }
+
+        .name {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.3rem;
+        }
+
+        .title {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .bio {
+            max-width: 480px;
+            margin: 1rem auto 0;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* ===== 社交链接 ===== */
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.3rem;
+            flex-wrap: wrap;
+        }
+
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 1rem;
+            border-radius: 100px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all var(--transition);
+            box-shadow: var(--shadow);
+        }
+
+        .social-link:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-1px);
+        }
+
+        /* ===== 通用卡片样式 ===== */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1.8rem;
+            margin-top: 1.8rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: box-shadow var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 650;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title span {
+            font-size: 1.3rem;
+        }
+
+        /* ===== 技能标签 ===== */
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+
+        .skill-tag {
+            background: #f3f4f6;
+            color: #374151;
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background var(--transition), color var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .skill-tag:hover {
+            background: #dbeafe;
+            color: var(--accent);
+            border-color: #bfdbfe;
+            cursor: default;
+        }
+
+        /* ===== 作品卡片 ===== */
+        .projects-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .project-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            background: #fafbfc;
+            border: 1px solid transparent;
+            transition: all var(--transition);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .project-item:hover {
+            background: #ffffff;
+            border-color: #d1d5db;
+            box-shadow: var(--shadow);
+            transform: translateX(4px);
+        }
+
+        .project-icon {
+            font-size: 1.8rem;
+            background: #f3f4f6;
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .project-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.15rem;
+        }
+
+        .project-info p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .project-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            background: #e5e7eb;
+            color: #4b5563;
+            padding: 0.15rem 0.6rem;
+            border-radius: 100px;
+            margin-top: 0.35rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        /* ===== 联系表单 ===== */
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 0.2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .form-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            padding: 0.7rem 0.9rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color var(--transition), box-shadow var(--transition);
+            outline: none;
+            background: #fcfcfd;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            align-self: flex-start;
+            padding: 0.7rem 2rem;
+            background: var(--accent);
+            color: white;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background var(--transition), transform var(--transition);
+            letter-spacing: 0.01em;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 14px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            margin-top: 2.8rem;
+            color: #9ca3af;
+            font-size: 0.8rem;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 500px) {
+            .container {
+                padding: 1rem 1rem 3rem;
+            }
+            .name {
+                font-size: 1.7rem;
+            }
+            .project-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========== 开场动画层 ========== -->
+    <div class="intro-overlay" id="introOverlay">
+        <canvas id="particleCanvas"></canvas>
+        <div class="intro-text-container">
+            <div class="intro-name">柒七零</div>
+            <div class="intro-subtitle">LIFE · PASSION · DREAM</div>
+        </div>
+        <div class="intro-hint">
+            <span>Scroll or Click to Enter</span>
+            <div class="line"></div>
+        </div>
+    </div>
+
+    <!-- ========== 主页内容 ========== -->
+    <div class="container">
+        <!-- 头像 & 基本信息 -->
+        <header class="header">
+            <div class="avatar" aria-label="头像占位">柒</div>
+            <h1 class="name">柒七零</h1>
+            <p class="title">热爱生活 · 享受每一天</p>
+            <p class="bio">
+                喜欢在厨房里钻研美食，在球场上挥洒汗水，在游戏世界中探索冒险。
+                生活就是最好的作品。
+            </p>
+            <div class="social-links">
+                <a href="#" class="social-link" target="_blank" rel="noopener">🐙 GitHub</a>
+                <a href="#" class="social-link" target="_blank" rel="noopener">💼 LinkedIn</a>
+                <a href="#" class="social-link" target="_blank" rel="noopener">📧 Email</a>
+            </div>
+        </header>
+
+        <!-- 技能板块 -->
+        <section class="card">
+            <h2 class="section-title"><span>🛠️</span> 我的技能</h2>
+            <div class="skills-grid">
+                <span class="skill-tag">🍚 煮饭</span>
+                <span class="skill-tag">🏀 篮球</span>
+                <span class="skill-tag">🎮 游戏</span>
+            </div>
+        </section>
+
+        <!-- 生活记录 -->
+        <section class="card">
+            <h2 class="section-title"><span>📁</span> 生活记录</h2>
+            <div class="projects-list">
+                <a href="#" class="project-item" target="_blank" rel="noopener">
+                    <div class="project-icon">🍳</div>
+                    <div class="project-info">
+                        <h3>今日菜谱</h3>
+                        <p>分享我最拿手的美食做法，从家常菜到创意料理。</p>
+                        <span class="project-tag">美食</span>
+                        <span class="project-tag">分享</span>
+                    </div>
+                </a>
+                <a href="#" class="project-item" target="_blank" rel="noopener">
+                    <div class="project-icon">⛹️</div>
+                    <div class="project-info">
+                        <h3>球场时刻</h3>
+                        <p>记录每一场精彩的比赛和训练日常。</p>
+                        <span class="project-tag">运动</span>
+                        <span class="project-tag">篮球</span>
+                    </div>
+                </a>
+                <a href="#" class="project-item" target="_blank" rel="noopener">
+                    <div class="project-icon">🎯</div>
+                    <div class="project-info">
+                        <h3>游戏攻略</h3>
+                        <p>通关心得、技巧分享，一起畅玩游戏世界。</p>
+                        <span class="project-tag">游戏</span>
+                        <span class="project-tag">攻略</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- 联系表单 -->
+        <section class="card" id="contact">
+            <h2 class="section-title"><span>✉️</span> 联系我</h2>
+            <form class="contact-form" action="#" method="POST" onsubmit="handleSubmit(event)">
+                <div class="form-group">
+                    <label for="name">姓名</label>
+                    <input type="text" id="name" name="name" placeholder="你的名字" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">邮箱</label>
+                    <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">消息</label>
+                    <textarea id="message" name="message" rows="4" placeholder="说点什么吧..." required></textarea>
+                </div>
+                <button type="submit" class="btn">发送消息</button>
+                <p id="form-feedback" style="font-size:0.85rem; color: #059669; margin-top: 0.3rem; display: none;">✅ 消息已发送 (演示)</p>
+            </form>
+        </section>
+
+        <footer class="footer">
+            <p>© 2026 柒七零 · 使用纯 HTML & CSS 构建</p>
+        </footer>
+    </div>
+
+    <script>
+        // ========== 粒子动画 Canvas ==========
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let animationId;
+        let mouseX = -1000;
+        let mouseY = -1000;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 粒子类
+        class Particle {
+            constructor() {
+                this.reset();
+                // 初始随机分布
+                this.y = Math.random() * canvas.height;
+                this.x = Math.random() * canvas.width;
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.6;
+                this.vy = (Math.random() - 0.5) * 0.6;
+                this.size = Math.random() * 2 + 0.8;
+                this.opacity = Math.random() * 0.6 + 0.2;
+                this.life = Math.random() * 300 + 200;
+                this.maxLife = this.life;
+            }
+
+            update() {
+                // 鼠标吸引
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const maxDist = 150;
+
+                if (dist < maxDist) {
+                    const force = (1 - dist / maxDist) * 0.03;
+                    this.vx += dx * force * 0.01;
+                    this.vy += dy * force * 0.01;
+                }
+
+                // 阻尼
+                this.vx *= 0.998;
+                this.vy *= 0.998;
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // 边界回弹
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+                // 生命衰减
+                this.life--;
+                if (this.life <= 0) this.reset();
+            }
+
+            draw(ctx) {
+                const lifeRatio = this.life / this.maxLife;
+                const alpha = this.opacity * (0.4 + lifeRatio * 0.6);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(100, 180, 255, ${alpha})`;
+                ctx.fill();
+
+                // 发光效果
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(100, 160, 255, ${alpha * 0.12})`;
+                ctx.fill();
+            }
+        }
+
+        // 创建粒子
+        const particleCount = Math.min(120, Math.floor(window.innerWidth * 0.15));
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        // 连线绘制
+        function drawLines() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 100) {
+                        const alpha = (1 - dist / 100) * 0.12;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(130, 180, 255, ${alpha})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        // 动画循环
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw(ctx);
+            });
+
+            drawLines();
+            animationId = requestAnimationFrame(animate);
+        }
+        animate();
+
+        // 鼠标移动吸引粒子
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            mouseX = -1000;
+            mouseY = -1000;
+        });
+
+        // 触摸支持
+        canvas.addEventListener('touchmove', (e) => {
+            mouseX = e.touches[0].clientX;
+            mouseY = e.touches[0].clientY;
+        }, { passive: true });
+
+        canvas.addEventListener('touchend', () => {
+            mouseX = -1000;
+            mouseY = -1000;
+        });
+
+        // ========== 关闭开场动画 ==========
+        const introOverlay = document.getElementById('introOverlay');
+
+        function hideIntro() {
+            if (introOverlay.classList.contains('hidden')) return;
+            introOverlay.classList.add('hidden');
+            // 动画结束后停止粒子以节省性能（可选）
+            setTimeout(() => {
+                cancelAnimationFrame(animationId);
+            }, 1000);
+        }
+
+        // 点击任意位置关闭
+        introOverlay.addEventListener('click', hideIntro);
+
+        // 滚轮关闭
+        introOverlay.addEventListener('wheel', hideIntro, { once: true });
+
+        // 触摸滑动关闭
+        let touchStartY = 0;
+        introOverlay.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        });
+        introOverlay.addEventListener('touchmove', (e) => {
+            const deltaY = touchStartY - e.touches[0].clientY;
+            if (Math.abs(deltaY) > 30) hideIntro();
+        });
+
+        // 3.5 秒后自动提示更明显
+        setTimeout(() => {
+            const hint = document.querySelector('.intro-hint');
+            if (hint) hint.style.opacity = '1';
+        }, 3500);
+
+        // ========== 联系表单 ==========
+        function handleSubmit(event) {
+            event.preventDefault();
+            const feedback = document.getElementById('form-feedback');
+            feedback.style.display = 'block';
+            event.target.reset();
+            setTimeout(() => {
+                feedback.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
